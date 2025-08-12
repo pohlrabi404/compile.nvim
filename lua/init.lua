@@ -23,6 +23,7 @@ M.setup = function(user_opts, _)
 end
 
 local location_info = {}
+local location_lookup = {}
 
 local state = {
 	win = -1,
@@ -38,8 +39,8 @@ local ns = vim.api.nvim_create_namespace("CompileNvim")
 local function find_all_location(str, line_num, on_complete)
 	local pattern_index = 1
 
-	local function process_next_pattern()
-		if pattern_index > #M.opts.patterns then
+	local function process_next_pattern(index)
+		if index > #M.opts.patterns then
 			if on_complete then
 				on_complete()
 			end
@@ -57,33 +58,27 @@ local function find_all_location(str, line_num, on_complete)
 			end
 			local found_str = string.sub(str, s, e)
 
-			-- Only include unique positions
-			local is_unique = true
-			for _, pos in ipairs(location_info) do
-				if pos.start_pos[1] == line_num and pos.start_pos[2] == s - 1 then
-					is_unique = false
-					break
-				end
-			end
-
-			if is_unique then
-				table.insert(location_info, {
+			if location_info[found_str] == nil then
+				location_info[found_str] = {
 					start_pos = { line_num, s - 1 },
 					end_pos = { line_num, e },
-					str = found_str,
 					pattern = pattern,
-				})
+				}
+				table.insert(location_lookup, found_str)
+			else
+				break
 			end
 
 			start = e + 1
 		end
 
-		pattern_index = pattern_index + 1
 		-- Schedule the next pattern to be processed on the next event loop tick
-		vim.schedule(process_next_pattern)
+		vim.schedule(function()
+			process_next_pattern(index + 1)
+		end)
 	end
 
-	process_next_pattern()
+	process_next_pattern(pattern_index)
 end
 
 -- Handling highlighting found pattern and extract location info
@@ -96,7 +91,7 @@ local function process_new_lines(first_line, last_line)
 
 	for i = 1, #lines do
 		find_all_location(lines[i], first_line + i - 1, function()
-			for _, location in ipairs(location_info) do
+			for str, location in pairs(location_info) do
 				-- highlight pattern
 				vim.schedule(function()
 					vim.hl.range(state.buf, ns, "StderrMsg", location.start_pos, location.end_pos, {
@@ -104,7 +99,7 @@ local function process_new_lines(first_line, last_line)
 					})
 				end)
 				-- find location info from pattern
-				local path, row, col = string.match(location.str, location.pattern)
+				local path, row, col = string.match(str, location.pattern)
 				if path ~= nil then
 					location.path = path
 					location.pos = { tonumber(row), tonumber(col) }
@@ -132,10 +127,24 @@ local function setup_auto_highlight()
 end
 
 -- reset highlight and location data before sending new command
-local function remove_highlight()
+local function reset()
 	state.current_error_index = 0
 	location_info = {}
 	vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
+end
+
+function M.reset()
+	if vim.api.nvim_buf_is_valid(state.buf) then
+		vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
+		vim.api.nvim_buf_delete(state.buf, {
+			force = true,
+			unload = true,
+		})
+	end
+	state.buf = -1
+	state.win = -1
+	state.current_error_index = 0
+	location_info = {}
 end
 
 -- handle openning terminal
@@ -151,7 +160,6 @@ local function open_terminal()
 	if not vim.api.nvim_win_is_valid(state.win) then
 		state.win = vim.api.nvim_open_win(state.buf, true, M.opts.win_opts)
 		if vim.api.nvim_get_option_value("buftype", { buf = buf }) ~= "terminal" then
-			-- vim.api.nvim_open_term(buf, {})
 			vim.cmd.terminal()
 		end
 		vim.cmd("wincmd p")
@@ -165,15 +173,7 @@ local function send_cmd()
 	vim.api.nvim_chan_send(channel_id, M.opts.default_cmd .. "\n")
 end
 
-function M.next_error()
-	if state.current_error_index == #location_info then
-		state.current_error_index = 1
-		_, state.current_error_file = ipairs(location_info[1])
-	else
-		state.current_error_index = state.current_error_index + 1
-		_, state.current_error_file = ipairs(location_info[state.current_error_index])
-	end
-
+local function edit_file()
 	vim.cmd("edit " .. state.current_error_file.path)
 	vim.api.nvim_win_set_cursor(0, state.current_error_file.pos)
 
@@ -196,34 +196,30 @@ function M.next_error()
 	)
 end
 
+function M.next_error()
+	if state.current_error_index == #location_lookup then
+		state.current_error_index = 1
+		local location = location_lookup[1]
+		state.current_error_file = location_info[location]
+	else
+		state.current_error_index = state.current_error_index + 1
+		local location = location_lookup[state.current_error_index]
+		state.current_error_file = location_info[location]
+	end
+	edit_file()
+end
+
 function M.prev_error()
 	if state.current_error_index <= 1 then
-		state.current_error_index = #location_info
-		_, state.current_error_file = ipairs(location_info[#location_info])
+		state.current_error_index = #location_lookup
+		local location = location_lookup[#location_lookup]
+		state.current_error_file = location_info[location]
 	else
 		state.current_error_index = state.current_error_index - 1
-		_, state.current_error_file = ipairs(location_info[state.current_error_index])
+		local location = location_lookup[state.current_error_index]
+		state.current_error_file = location_info[location]
 	end
-
-	vim.cmd("edit " .. state.current_error_file.path)
-	vim.api.nvim_win_set_cursor(0, state.current_error_file.pos)
-
-	if state.win == vim.api.nvim_get_current_win() then
-		state.win = vim.api.nvim_open_win(state.buf, false, M.opts.win_opts)
-	end
-
-	if not vim.api.nvim_win_is_valid(state.win) then
-		open_terminal()
-	end
-	vim.api.nvim_win_set_cursor(state.win, state.current_error_file.start_pos)
-	vim.hl.range(
-		state.buf,
-		ns,
-		"Search",
-		state.current_error_file.start_pos,
-		state.current_error_file.end_pos,
-		{ timeout = 500, priority = 2000 }
-	)
+	edit_file()
 end
 
 function M.set_cmd()
@@ -255,11 +251,12 @@ function M.make()
 		end)
 	end
 	open_terminal()
-	remove_highlight()
+	reset()
 	setup_auto_highlight()
 	send_cmd()
 end
 
+vim.keymap.set("n", "<C-c><C-r>", M.reset)
 vim.keymap.set("n", "<C-c><C-c>", M.make)
 vim.keymap.set("n", "<C-c>c", M.set_cmd)
 vim.keymap.set("n", "<C-c><C-n>", M.next_error)
