@@ -37,20 +37,9 @@ local state = {
 local ns = vim.api.nvim_create_namespace("CompileNvim")
 
 local function find_all_location(str, line_num, on_complete)
-	local pattern_index = 1
-
-	local function process_next_pattern(index)
-		if index > #M.opts.patterns then
-			if on_complete then
-				on_complete()
-			end
-			return
-		end
-
-		local pattern = M.opts.patterns[pattern_index]
+	-- Inner loop to find all matches for the current pattern
+	for _, pattern in ipairs(M.opts.patterns) do
 		local start = 1
-
-		-- Inner loop to find all matches for the current pattern
 		while true do
 			local s, e = string.find(str, pattern, start)
 			if not s then
@@ -65,25 +54,17 @@ local function find_all_location(str, line_num, on_complete)
 					pattern = pattern,
 				}
 				table.insert(location_lookup, found_str)
-			else
-				break
 			end
 
 			start = e + 1
 		end
-
-		-- Schedule the next pattern to be processed on the next event loop tick
-		vim.schedule(function()
-			process_next_pattern(index + 1)
-		end)
 	end
-
-	process_next_pattern(pattern_index)
+	on_complete()
 end
 
 -- Handling highlighting found pattern and extract location info
 local function process_new_lines(first_line, last_line)
-	local lines = vim.api.nvim_buf_get_lines(state.buf, first_line, last_line - 1, false)
+	local lines = vim.api.nvim_buf_get_lines(state.buf, first_line, last_line, false)
 
 	if lines == nil then
 		return
@@ -112,24 +93,24 @@ end
 -- attach to term buffer
 local function setup_auto_highlight()
 	vim.api.nvim_buf_attach(state.buf, false, {
-		on_lines = function(_, _, changedTick, first_line, last_line, _)
-			vim.schedule(function()
-				if changedTick == nil then
-					return
-				end
-				process_new_lines(first_line, last_line)
-				-- set cursor to the end
-				local line_count = vim.api.nvim_buf_line_count(state.buf)
-				vim.api.nvim_win_set_cursor(state.win, { line_count, 0 })
-			end)
+		on_lines = function(_, _, changedTick, first_line, _, last_line_new, _)
+			if changedTick == nil then
+				return
+			end
+			process_new_lines(first_line, last_line_new)
+			-- set cursor to the end
+			local line_count = vim.api.nvim_buf_line_count(state.buf)
+			vim.api.nvim_win_set_cursor(state.win, { line_count, 0 })
 		end,
 	})
 end
 
 -- reset highlight and location data before sending new command
 local function reset()
+	state.current_error_file = {}
 	state.current_error_index = 0
 	location_info = {}
+	location_lookup = {}
 	vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
 end
 
@@ -144,6 +125,8 @@ function M.reset()
 	state.buf = -1
 	state.win = -1
 	state.current_error_index = 0
+	state.current_error_file = {}
+	location_lookup = {}
 	location_info = {}
 end
 
@@ -197,6 +180,10 @@ local function edit_file()
 end
 
 function M.next_error()
+	if #location_lookup < 1 then
+		print("No Warning")
+		return
+	end
 	if state.current_error_index == #location_lookup then
 		state.current_error_index = 1
 		local location = location_lookup[1]
@@ -210,6 +197,10 @@ function M.next_error()
 end
 
 function M.prev_error()
+	if #location_lookup < 1 then
+		print("No Warning")
+		return
+	end
 	if state.current_error_index <= 1 then
 		state.current_error_index = #location_lookup
 		local location = location_lookup[#location_lookup]
@@ -256,10 +247,13 @@ function M.make()
 	send_cmd()
 end
 
-vim.keymap.set("n", "<C-c><C-r>", M.reset)
-vim.keymap.set("n", "<C-c><C-c>", M.make)
-vim.keymap.set("n", "<C-c>c", M.set_cmd)
-vim.keymap.set("n", "<C-c><C-n>", M.next_error)
-vim.keymap.set("n", "<C-c><C-p>", M.prev_error)
+vim.keymap.set("n", "<leader>cr", M.reset)
+vim.keymap.set("n", "<leader>cc", M.make)
+vim.keymap.set("n", "<leader>cs", M.set_cmd)
+vim.keymap.set("n", "<leader>cn", M.next_error)
+vim.keymap.set("n", "<leader>cp", M.prev_error)
+vim.keymap.set("n", "<leader>cp", function()
+	print(vim.inspect(location_info))
+end)
 
 return M
