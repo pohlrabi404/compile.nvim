@@ -17,29 +17,43 @@ M.opts = {
 		"(%S+):(%d+):(%d+)",
 	},
 }
+
 M.setup = function(user_opts, _)
 	user_opts = user_opts or {}
 	M.opts = vim.tbl_deep_extend("force", user_opts, M.opts)
 end
 
+---@class Location
+---@field start_pos [integer, integer]
+---@field end_pos [integer, integer]
+---@field pattern string
+---@field path string
+---@field pos [integer, integer]
+
+---@class Locations
+---@type table<string, Location>
 local location_info = {}
+
+---@class Lookup
+---@type table<string>
 local location_lookup = {}
 
 local state = {
 	win = -1,
 	buf = -1,
-	current_error_pos = {},
+	current_error_pos = nil,
 	current_error_index = 0,
 	compile_cmd_flag = false,
+	initialized_flag = false,
 }
 
 -- handle highlighting
 local ns = vim.api.nvim_create_namespace("CompileNvim")
 
 local function find_all_location(str, line_num, on_complete)
-	-- Inner loop to find all matches for the current pattern
 	for _, pattern in ipairs(M.opts.patterns) do
 		local start = 1
+		-- Inner loop to find all matches for the current pattern
 		while true do
 			local s, e = string.find(str, pattern, start)
 			if not s then
@@ -52,6 +66,8 @@ local function find_all_location(str, line_num, on_complete)
 					start_pos = { line_num, s - 1 },
 					end_pos = { line_num, e },
 					pattern = pattern,
+					path = "",
+					pos = { 0, 0 },
 				}
 				table.insert(location_lookup, found_str)
 			end
@@ -90,6 +106,15 @@ local function process_new_lines(first_line, last_line)
 	end
 end
 
+-- reset highlight and location data before sending new command
+local function reset()
+	state.current_error_file = nil
+	state.current_error_index = 0
+	location_info = {}
+	location_lookup = {}
+	vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
+end
+
 -- attach to term buffer
 local function setup_auto_highlight()
 	vim.api.nvim_buf_attach(state.buf, false, {
@@ -102,32 +127,10 @@ local function setup_auto_highlight()
 			local line_count = vim.api.nvim_buf_line_count(state.buf)
 			vim.api.nvim_win_set_cursor(state.win, { line_count, 0 })
 		end,
+		on_detach = function()
+			reset()
+		end,
 	})
-end
-
--- reset highlight and location data before sending new command
-local function reset()
-	state.current_error_file = {}
-	state.current_error_index = 0
-	location_info = {}
-	location_lookup = {}
-	vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
-end
-
-function M.reset()
-	if vim.api.nvim_buf_is_valid(state.buf) then
-		vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
-		vim.api.nvim_buf_delete(state.buf, {
-			force = true,
-			unload = true,
-		})
-	end
-	state.buf = -1
-	state.win = -1
-	state.current_error_index = 0
-	state.current_error_file = {}
-	location_lookup = {}
-	location_info = {}
 end
 
 -- handle openning terminal
@@ -156,17 +159,39 @@ local function send_cmd()
 	vim.api.nvim_chan_send(channel_id, M.opts.default_cmd .. "\n")
 end
 
+local function open_win(path, pos)
+	local current_win_id = vim.api.nvim_get_current_win()
+	if current_win_id == state.win then
+		-- find other window
+		for _, win in ipairs(vim.api.nvim_list_wins()) do
+			if win ~= state.win then
+				vim.api.nvim_set_current_win(win)
+				vim.cmd("edit " .. path)
+				vim.api.nvim_win_set_cursor(win, pos)
+				-- vim.api.nvim_set_current_win(current_win_id)
+				return
+			end
+		end
+		-- no other window
+		local buf = vim.api.nvim_create_buf(true, false)
+		local win = vim.api.nvim_open_win(buf, true, M.opts.win_opts)
+		vim.cmd("edit " .. path)
+		vim.api.nvim_win_set_cursor(win, pos)
+		-- vim.api.nvim_set_current_win(current_win_id)
+	else
+		-- use this window
+		vim.cmd("edit " .. path)
+		vim.api.nvim_win_set_cursor(0, pos)
+
+		-- open terminal back if it's closed
+		if not vim.api.nvim_win_is_valid(state.win) then
+			open_terminal()
+		end
+	end
+end
+
 local function edit_file()
-	vim.cmd("edit " .. state.current_error_file.path)
-	vim.api.nvim_win_set_cursor(0, state.current_error_file.pos)
-
-	if state.win == vim.api.nvim_get_current_win() then
-		state.win = vim.api.nvim_open_win(state.buf, false, M.opts.win_opts)
-	end
-
-	if not vim.api.nvim_win_is_valid(state.win) then
-		open_terminal()
-	end
+	open_win(state.current_error_file.path, state.current_error_file.pos)
 
 	vim.api.nvim_win_set_cursor(state.win, state.current_error_file.start_pos)
 	vim.hl.range(
@@ -180,6 +205,7 @@ local function edit_file()
 end
 
 function M.next_error()
+	-- no error case
 	if #location_lookup < 1 then
 		print("No Warning")
 		return
@@ -197,6 +223,7 @@ function M.next_error()
 end
 
 function M.prev_error()
+	-- no error case
 	if #location_lookup < 1 then
 		print("No Warning")
 		return
@@ -224,12 +251,34 @@ function M.set_cmd()
 	end)
 end
 
+function M.terminate()
+	local channel_id = vim.api.nvim_get_option_value("channel", { buf = state.buf })
+	vim.api.nvim_chan_send(channel_id, "\x03")
+end
+
+function M.go_to_error()
+	local cursor_row, cursor_col = vim.api.nvim_win_get_cursor(state.win)[1], vim.api.nvim_win_get_cursor(state.win)[2]
+	cursor_row = cursor_row - 1
+	for _, location in pairs(location_info) do
+		local after_start = (cursor_row > location.start_pos[1])
+			or (cursor_row == location.start_pos[1] and cursor_col >= location.start_pos[2])
+		local before_end = (cursor_row < location.end_pos[1])
+			or (cursor_row == location.start_pos[1] and cursor_col <= location.end_pos[2])
+
+		if after_start and before_end then
+			open_win(location.path, location.pos)
+			return
+		end
+	end
+end
+
 -- main compile command
 -- toggle terminal
 -- -> attach set highlight + get location info
 -- -> send command
 -- -> populate function to navigate location info
 function M.make()
+	-- get compile command
 	if not state.compile_cmd_flag then
 		vim.ui.input({ prompt = "Enter compile command: ", default = M.opts.default_cmd }, function(input)
 			if input then
@@ -240,6 +289,12 @@ function M.make()
 				return
 			end
 		end)
+		-- also set keymap once
+		vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<Cmd>lua require('compile').go_to_error()<CR>", {})
+	end
+	-- terminate before running new commands
+	if state.initialized_flag then
+		M.terminate()
 	end
 	open_terminal()
 	reset()
@@ -247,13 +302,10 @@ function M.make()
 	send_cmd()
 end
 
-vim.keymap.set("n", "<leader>cr", M.reset)
 vim.keymap.set("n", "<leader>cc", M.make)
+vim.keymap.set("n", "<leader>ct", M.terminate)
 vim.keymap.set("n", "<leader>cs", M.set_cmd)
 vim.keymap.set("n", "<leader>cn", M.next_error)
 vim.keymap.set("n", "<leader>cp", M.prev_error)
-vim.keymap.set("n", "<leader>cp", function()
-	print(vim.inspect(location_info))
-end)
 
 return M
