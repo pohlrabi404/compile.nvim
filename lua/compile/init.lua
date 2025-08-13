@@ -292,5 +292,4 @@ vim.keymap.set("n", "<leader>cs", M.set_cmd)
 vim.keymap.set("n", "<leader>cn", M.next_error)
 vim.keymap.set("n", "<leader>cp", M.prev_error)
 
->>>>>>> parent of b51c6f2 (feat(nav): adding local navigation inside term)
 return M
