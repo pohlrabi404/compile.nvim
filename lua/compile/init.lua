@@ -7,8 +7,6 @@ M.setup = function(opts, _)
 	M.opts = vim.tbl_deep_extend("force", opts, M.opts)
 end
 
-<<<<<<< HEAD
-=======
 ---@class Location
 ---@field start_pos [integer, integer]
 ---@field end_pos [integer, integer]
