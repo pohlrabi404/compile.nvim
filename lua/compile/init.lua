@@ -159,7 +159,7 @@ local function send_cmd()
 	vim.api.nvim_chan_send(channel_id, M.opts.default_cmd .. "\n")
 end
 
-local function open_win(path, pos)
+local function open_win(path, pos, go_into)
 	local current_win_id = vim.api.nvim_get_current_win()
 	if current_win_id == state.win then
 		-- find other window
@@ -168,7 +168,9 @@ local function open_win(path, pos)
 				vim.api.nvim_set_current_win(win)
 				vim.cmd("edit " .. path)
 				vim.api.nvim_win_set_cursor(win, pos)
-				-- vim.api.nvim_set_current_win(current_win_id)
+				if not go_into then
+					vim.api.nvim_set_current_win(current_win_id)
+				end
 				return
 			end
 		end
@@ -177,7 +179,9 @@ local function open_win(path, pos)
 		local win = vim.api.nvim_open_win(buf, true, M.opts.win_opts)
 		vim.cmd("edit " .. path)
 		vim.api.nvim_win_set_cursor(win, pos)
-		-- vim.api.nvim_set_current_win(current_win_id)
+		if not go_into then
+			vim.api.nvim_set_current_win(current_win_id)
+		end
 	else
 		-- use this window
 		vim.cmd("edit " .. path)
@@ -190,10 +194,11 @@ local function open_win(path, pos)
 	end
 end
 
-local function edit_file()
-	open_win(state.current_error_file.path, state.current_error_file.pos)
+local function edit_file(go_into)
+	open_win(state.current_error_file.path, state.current_error_file.pos, go_into)
 
-	vim.api.nvim_win_set_cursor(state.win, state.current_error_file.start_pos)
+	local pos = { state.current_error_file.start_pos[1] + 1, state.current_error_file.start_pos[2] }
+	vim.api.nvim_win_set_cursor(state.win, pos)
 	vim.hl.range(
 		state.buf,
 		ns,
@@ -204,7 +209,10 @@ local function edit_file()
 	)
 end
 
-function M.next_error()
+function M.next_error(go_into)
+	if go_into == nil then
+		go_into = true
+	end
 	-- no error case
 	if #location_lookup < 1 then
 		print("No Warning")
@@ -219,10 +227,13 @@ function M.next_error()
 		local location = location_lookup[state.current_error_index]
 		state.current_error_file = location_info[location]
 	end
-	edit_file()
+	edit_file(go_into)
 end
 
-function M.prev_error()
+function M.prev_error(go_into)
+	if go_into == nil then
+		go_into = true
+	end
 	-- no error case
 	if #location_lookup < 1 then
 		print("No Warning")
@@ -237,7 +248,7 @@ function M.prev_error()
 		local location = location_lookup[state.current_error_index]
 		state.current_error_file = location_info[location]
 	end
-	edit_file()
+	edit_file(go_into)
 end
 
 function M.set_cmd()
@@ -290,7 +301,6 @@ function M.make()
 			end
 		end)
 		-- also set keymap once
-		vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<Cmd>lua require('compile').go_to_error()<CR>", {})
 	end
 	-- terminate before running new commands
 	if state.initialized_flag then
@@ -301,6 +311,31 @@ function M.make()
 	setup_auto_highlight()
 	send_cmd()
 end
+
+vim.api.nvim_create_autocmd("BufEnter", {
+	callback = function()
+		local buf = vim.api.nvim_get_current_buf()
+		if buf == state.buf then
+			vim.keymap.set("n", "<CR>", M.go_to_error, { buffer = state.buf })
+			vim.keymap.set("n", "n", function()
+				M.next_error(false)
+			end, { buffer = state.buf })
+			vim.keymap.set("n", "p", function()
+				M.prev_error(false)
+			end, { buffer = state.buf })
+		end
+	end,
+})
+vim.api.nvim_create_autocmd("BufLeave", {
+	callback = function()
+		local buf = vim.api.nvim_get_current_buf()
+		if buf == state.buf then
+			vim.keymap.del("n", "<CR>", { buffer = state.buf })
+			vim.keymap.del("n", "n", { buffer = state.buf })
+			vim.keymap.del("n", "p", { buffer = state.buf })
+		end
+	end,
+})
 
 vim.keymap.set("n", "<leader>cc", M.make)
 vim.keymap.set("n", "<leader>ct", M.terminate)
