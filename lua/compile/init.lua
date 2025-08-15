@@ -57,6 +57,7 @@ M.opts = {
 
 	patterns = {
 		rust = { "(%S+):(%d+):(%d+)", "123" },
+		Makefile = { "%[(%S+):(%d+):.+%]", "12" },
 	},
 
 	colors = {

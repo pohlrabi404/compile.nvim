@@ -88,7 +88,63 @@ end
 local function highlight_extract(location_pattern, lines, first_line)
 	local pattern = location_pattern[1]
 	local positions = require("compile.utils").split_to_num(location_pattern[2])
+	print(pattern)
+	print(#positions)
 	local formatted = {}
+
+	if #positions == 2 then
+		for index, line in ipairs(lines) do
+			local a, b = string.match(line, pattern)
+			if not (a and b) then
+				goto continue
+			end
+
+			local as, ae = string.find(line, a, 1, true)
+			local bs, be = string.find(line, b, ae + 1, true)
+
+			local sorted = {}
+			sorted[positions[1]] = { a, as, ae }
+			sorted[positions[2]] = { b, bs, be }
+
+			formatted["file"] = {
+				val = sorted[1][1],
+				pos = { { first_line + index - 1, sorted[1][2] - 1 }, { first_line + index - 1, sorted[1][3] } },
+			}
+			formatted["row"] = {
+				val = tonumber(sorted[2][1]),
+				pos = { { first_line + index - 1, sorted[2][2] - 1 }, { first_line + index - 1, sorted[2][3] } },
+			}
+			formatted["col"] = {
+				val = 0,
+				pos = { { first_line + index - 1, sorted[2][2] - 1 }, { first_line + index - 1, sorted[2][3] } },
+			}
+
+			-- Apply highlights
+			vim.hl.range(
+				require("compile.term").state.buf,
+				M.ns,
+				opts.colors.file,
+				formatted.file.pos[1],
+				formatted.file.pos[2]
+			)
+			vim.hl.range(
+				require("compile.term").state.buf,
+				M.ns,
+				opts.colors.row,
+				formatted.row.pos[1],
+				formatted.row.pos[2]
+			)
+
+			-- Store warning
+			local key = a .. ":" .. b
+			if not M.state.warning_list[key] then
+				M.state.warning_list[key] = formatted
+				table.insert(M.state.warning_index, key)
+			end
+
+			::continue::
+		end
+	end
 
 	for index, line in ipairs(lines) do
 		local a, b, c = string.match(line, pattern)
