@@ -100,17 +100,22 @@ local function highlight_extract(location_pattern, lines, first_line)
 		local bs, be = string.find(line, b, ae + 1, true)
 		local cs, ce = string.find(line, c, be + 1, true)
 
+		local sorted = {}
+		sorted[positions[1]] = { a, as, ae }
+		sorted[positions[2]] = { b, bs, be }
+		sorted[positions[3]] = { c, cs, ce }
+
 		formatted["file"] = {
-			val = a,
-			pos = { { first_line + index - 1, as - 1 }, { first_line + index - 1, ae } },
+			val = sorted[1][1],
+			pos = { { first_line + index - 1, sorted[1][2] - 1 }, { first_line + index - 1, sorted[1][3] } },
 		}
 		formatted["row"] = {
-			val = tonumber(b),
-			pos = { { first_line + index - 1, bs - 1 }, { first_line + index - 1, be } },
+			val = tonumber(sorted[2][1]),
+			pos = { { first_line + index - 1, sorted[2][2] - 1 }, { first_line + index - 1, sorted[2][3] } },
 		}
 		formatted["col"] = {
-			val = tonumber(c),
-			pos = { { first_line + index - 1, cs - 1 }, { first_line + index - 1, ce } },
+			val = tonumber(sorted[3][1]),
+			pos = { { first_line + index - 1, sorted[3][2] - 1 }, { first_line + index - 1, sorted[3][3] } },
 		}
 
 		-- Apply highlights

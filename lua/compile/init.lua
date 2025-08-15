@@ -52,7 +52,7 @@ M.opts = {
 	},
 
 	cmds = {
-		default = "cargo check",
+		default = "make -k",
 	},
 
 	patterns = {
@@ -94,6 +94,9 @@ M.opts = {
 					["d"] = "debug",
 					["<Cr>"] = "nearest_error",
 				},
+				["t"] = {
+					["<Cr>"] = "clear_hl",
+				},
 			},
 		},
 	},
@@ -107,9 +110,18 @@ function M.clear()
 	end)
 end
 
+---Clear highlight and warning_list
+function M.clear_hl()
+	M.highlight.clear_hl_warning()
+	local cursor_pos = vim.api.nvim_win_get_cursor(M.term.state.win)
+	M.term.state.last_line = cursor_pos[1]
+	vim.api.nvim_chan_send(M.term.state.channel, "\n")
+end
+
 ---Compile project and capture errors
 function M.compile()
 	M.utils.enter_wrapper(function()
+		M.term.destroy()
 		if M.highlight.has_warnings() then
 			M.highlight.clear_hl_warning()
 		end
@@ -178,10 +190,6 @@ function M.nearest_error()
 
 		local warning_index = M.utils.binary_search(warning_row_list, cursor_pos[1] - 1)
 		M.highlight.state.current_warning = warning_index
-		print(vim.inspect(warning_row_list))
-		print(vim.inspect("cursor" .. cursor_pos[1] - 1))
-		print(vim.inspect("index " .. warning_index))
-		-- print(vim.inspect(M.highlight.get_current_warning()))
 		M.goto_error()
 	end)
 end
@@ -236,9 +244,7 @@ end
 
 ---Debug: Print warning list
 function M.debug()
-	local list = { 6, 14, 22, 31, 37 }
-	local num = 23
-	print(vim.inspect(M.utils.binary_search(list, num)))
+	M.highlight.clear_hl_warning()
 end
 
 ---Setup plugin with user configuration

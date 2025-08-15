@@ -23,6 +23,7 @@ M.state = {
 	buf = -1,
 	win = -1,
 	channel = -1,
+	last_line = 1,
 	warning_list = {},
 	warning_index = {},
 	current_warning = 0,
@@ -97,6 +98,12 @@ end
 function M.attach_event()
 	vim.api.nvim_buf_attach(M.state.buf, false, {
 		on_lines = function(_, _, _, first_line, _, last_line)
+			if last_line <= M.state.last_line then
+				return
+			end
+			if first_line < M.state.last_line then
+				first_line = M.state.last_line
+			end
 			local lines = vim.api.nvim_buf_get_lines(M.state.buf, first_line, last_line, false)
 			require("compile.highlight").process_lines(lines, first_line)
 		end,
