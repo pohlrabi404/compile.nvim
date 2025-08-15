@@ -258,6 +258,12 @@ function M.setup(opts)
 	if M.opts.normal_win_opts.height < 1 then
 		M.opts.normal_win_opts.height = math.floor(vim.o.lines * M.opts.normal_win_opts.height)
 	end
+	if M.opts.term_win_opts.width < 1 then
+		M.opts.term_win_opts.width = math.floor(vim.o.columns * M.opts.term_win_opts.width)
+	end
+	if M.opts.normal_win_opts.width < 1 then
+		M.opts.normal_win_opts.width = math.floor(vim.o.columns * M.opts.normal_win_opts.width)
+	end
 
 	-- Initialize submodules
 	M.term.setup(M.opts)
