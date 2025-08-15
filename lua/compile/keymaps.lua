@@ -14,7 +14,7 @@ function M.setup(main, opts)
 	for modes, keymap in pairs(opts.keys.global) do
 		for key, cmd in pairs(keymap) do
 			vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-				main[cmd]()
+				M.load(cmd)
 			end, { silent = true })
 		end
 	end
@@ -32,7 +32,7 @@ function M.setup(main, opts)
 			for modes, keymap in pairs(opts.keys.term.global) do
 				for key, cmd in pairs(keymap) do
 					vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-						main[cmd]()
+						M.load(cmd)
 					end, { silent = true })
 				end
 			end
@@ -41,7 +41,7 @@ function M.setup(main, opts)
 			for modes, keymap in pairs(opts.keys.term.buffer) do
 				for key, cmd in pairs(keymap) do
 					vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-						main[cmd]()
+						M.load(cmd)
 					end, { buffer = ev.buf, silent = true })
 				end
 			end
@@ -61,6 +61,18 @@ function M.setup(main, opts)
 			end
 		end,
 	})
+end
+
+function M.load(code_str)
+	local func, err = load(code_str)
+	if not func then
+		print("Error calling function " .. err)
+	else
+		local status, result = pcall(func)
+		if not status then
+			print("Runtime error " .. result)
+		end
+	end
 end
 
 return M

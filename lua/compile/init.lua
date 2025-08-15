@@ -69,34 +69,35 @@ M.opts = {
 	keys = {
 		global = {
 			["n"] = {
-				["<localleader>cc"] = "compile",
-				["<localleader>cn"] = "next_error",
-				["<localleader>cp"] = "prev_error",
-				["<localleader>cl"] = "last_error",
-				["<localleader>cf"] = "first_error",
+				["<localleader>cc"] = "require('compile').compile()",
+				["<localleader>cn"] = "require('compile').next_error()",
+				["<localleader>cp"] = "require('compile').prev_error()",
+				["<localleader>cl"] = "require('compile').last_error()",
+				["<localleader>cf"] = "require('compile').first_error()",
 			},
 		},
 		term = {
 			global = {
 				["n"] = {
-					["<localleader>cr"] = "clear",
-					["<localleader>cq"] = "destroy",
+					["<localleader>cr"] = "require('compile').clear()",
+					["<localleader>cq"] = "require('compile').destroy()",
 				},
 			},
 			buffer = {
 				["n"] = {
-					["r"] = "clear",
-					["c"] = "compile",
-					["q"] = "destroy",
-					["n"] = "next_error",
-					["p"] = "prev_error",
-					["0"] = "first_error",
-					["$"] = "last_error",
-					["d"] = "debug",
-					["<Cr>"] = "nearest_error",
+					["r"] = "require('compile').clear()",
+					["c"] = "require('compile').compile()",
+					["q"] = "require('compile').destroy()",
+					["n"] = "require('compile').next_error()",
+					["p"] = "require('compile').prev_error()",
+					["0"] = "require('compile').first_error()",
+					["$"] = "require('compile').last_error()",
+					["d"] = "require('compile').debug()",
+					["<Cr>"] = "require('compile').nearest_error()",
 				},
 				["t"] = {
-					["<Cr>"] = "clear_hl",
+					["<CR>"] = "require('compile').clear_hl()",
+					["<C-j>"] = "require('compile.term').send_cmd('')",
 				},
 			},
 		},
