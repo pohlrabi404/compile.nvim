@@ -51,7 +51,9 @@ function M.get_normal_win()
 		end
 		-- Create new window if none found
 		local buf = vim.api.nvim_create_buf(true, false)
-		return vim.api.nvim_open_win(buf, true, require("compile").opts.normal_win_opts)
+		local win = vim.api.nvim_open_win(buf, true, require("compile").opts.normal_win_opts)
+		vim.api.nvim_set_option_value("number", true, { win = win })
+		return win
 	end
 	return vim.api.nvim_get_current_win()
 end
