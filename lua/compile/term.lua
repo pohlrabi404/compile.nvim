@@ -43,6 +43,7 @@ function M.init()
 	M.state.win = vim.api.nvim_open_win(M.state.buf, true, opts.term_win_opts)
 	vim.cmd("term")
 	M.state.channel = vim.api.nvim_get_option_value("channel", { buf = M.state.buf })
+	vim.api.nvim_buf_set_name(M.state.buf, opts.term_win_name)
 end
 
 ---Show terminal window

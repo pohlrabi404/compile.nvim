@@ -88,11 +88,9 @@ end
 local function highlight_extract(location_pattern, lines, first_line)
 	local pattern = location_pattern[1]
 	local positions = require("compile.utils").split_to_num(location_pattern[2])
-	print(pattern)
-	print(#positions)
-	local formatted = {}
 
 	if #positions == 2 then
+		local formatted = {}
 		for index, line in ipairs(lines) do
 			local a, b = string.match(line, pattern)
 			if not (a and b) then
@@ -144,9 +142,11 @@ local function highlight_extract(location_pattern, lines, first_line)
 
 			::continue::
 		end
+		return
 	end
 
 	for index, line in ipairs(lines) do
+		local formatted = {}
 		local a, b, c = string.match(line, pattern)
 		if not (a and b and c) then
 			goto continue

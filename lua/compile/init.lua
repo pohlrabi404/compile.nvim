@@ -30,6 +30,7 @@ M.keymaps = require("compile.keymaps")
 
 -- Default configuration
 M.opts = {
+	term_win_name = "CompileTerm",
 	---@type vim.api.keyset.win_config
 	term_win_opts = {
 		split = "below",
@@ -92,7 +93,6 @@ M.opts = {
 					["p"] = "require('compile').prev_error()",
 					["0"] = "require('compile').first_error()",
 					["$"] = "require('compile').last_error()",
-					["d"] = "require('compile').debug()",
 					["<Cr>"] = "require('compile').nearest_error()",
 				},
 				["t"] = {
@@ -117,6 +117,7 @@ function M.clear_hl()
 	M.highlight.clear_hl_warning()
 	local cursor_pos = vim.api.nvim_win_get_cursor(M.term.state.win)
 	M.term.state.last_line = cursor_pos[1]
+	-- M.term.attach_event()
 	vim.api.nvim_chan_send(M.term.state.channel, "\n")
 end
 
@@ -242,11 +243,6 @@ function M.first_error()
 		M.highlight.first_warning()
 		M.goto_error()
 	end)
-end
-
----Debug: Print warning list
-function M.debug()
-	M.highlight.clear_hl_warning()
 end
 
 ---Setup plugin with user configuration
