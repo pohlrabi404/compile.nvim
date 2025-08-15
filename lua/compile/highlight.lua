@@ -1,0 +1,159 @@
+---@meta
+---@class HighlightModule
+---@field state {warning_list: table, warning_index: table, current_warning: integer}
+---@field ns integer Highlight namespace
+---@field setup fun(opts: table)
+---@field clear_hl_warning fun()
+---@field has_warnings fun(): boolean
+---@field get_current_warning fun(): table|nil
+---@field next_warning fun()
+---@field prev_warning fun()
+---@field first_warning fun()
+---@field last_warning fun()
+---@field process_lines fun(lines: string[], first_line: integer)
+
+local M = {}
+
+M.state = {
+	warning_list = {},
+	warning_index = {},
+	current_warning = 0,
+}
+
+M.ns = vim.api.nvim_create_namespace("TermHl")
+
+local opts = nil
+
+---Initialize highlight module
+---@param o table Configuration options
+function M.setup(o)
+	opts = o
+end
+
+---Clear all warning highlights
+function M.clear_hl_warning()
+	if vim.api.nvim_buf_is_valid(require("compile.term").state.buf) then
+		vim.api.nvim_buf_clear_namespace(require("compile.term").state.buf, M.ns, 0, -1)
+	end
+	M.state.warning_list = {}
+	M.state.warning_index = {}
+end
+
+---Check if warnings exist
+---@return boolean
+function M.has_warnings()
+	return #M.state.warning_index > 0
+end
+
+---Get current warning data
+---@return table|nil
+function M.get_current_warning()
+	if not M.has_warnings() then
+		return nil
+	end
+	return M.state.warning_list[M.state.warning_index[M.state.current_warning]]
+end
+
+---Navigate to next warning
+function M.next_warning()
+	if M.state.current_warning >= #M.state.warning_index then
+		M.state.current_warning = 1
+	else
+		M.state.current_warning = M.state.current_warning + 1
+	end
+end
+
+---Navigate to previous warning
+function M.prev_warning()
+	if M.state.current_warning <= 1 then
+		M.state.current_warning = #M.state.warning_index
+	else
+		M.state.current_warning = M.state.current_warning - 1
+	end
+end
+
+---Navigate to first warning
+function M.first_warning()
+	M.state.current_warning = 1
+end
+
+---Navigate to last warning
+function M.last_warning()
+	M.state.current_warning = #M.state.warning_index
+end
+
+---Process new terminal lines for warnings
+---@param lines string[]
+---@param first_line integer
+local function highlight_extract(location_pattern, lines, first_line)
+	local pattern = location_pattern[1]
+	local positions = require("compile.utils").split_to_num(location_pattern[2])
+	local formatted = {}
+
+	for index, line in ipairs(lines) do
+		local a, b, c = string.match(line, pattern)
+		if not (a and b and c) then
+			goto continue
+		end
+
+		local as, ae = string.find(line, a, 1, true)
+		local bs, be = string.find(line, b, ae + 1, true)
+		local cs, ce = string.find(line, c, be + 1, true)
+
+		formatted["file"] = {
+			val = a,
+			pos = { { first_line + index - 1, as - 1 }, { first_line + index - 1, ae } },
+		}
+		formatted["row"] = {
+			val = tonumber(b),
+			pos = { { first_line + index - 1, bs - 1 }, { first_line + index - 1, be } },
+		}
+		formatted["col"] = {
+			val = tonumber(c),
+			pos = { { first_line + index - 1, cs - 1 }, { first_line + index - 1, ce } },
+		}
+
+		-- Apply highlights
+		vim.hl.range(
+			require("compile.term").state.buf,
+			M.ns,
+			opts.colors.file,
+			formatted.file.pos[1],
+			formatted.file.pos[2]
+		)
+		vim.hl.range(
+			require("compile.term").state.buf,
+			M.ns,
+			opts.colors.row,
+			formatted.row.pos[1],
+			formatted.row.pos[2]
+		)
+		vim.hl.range(
+			require("compile.term").state.buf,
+			M.ns,
+			opts.colors.col,
+			formatted.col.pos[1],
+			formatted.col.pos[2]
+		)
+
+		-- Store warning
+		local key = a .. ":" .. b .. ":" .. c
+		if not M.state.warning_list[key] then
+			M.state.warning_list[key] = formatted
+			table.insert(M.state.warning_index, key)
+		end
+
+		::continue::
+	end
+end
+
+---Process incoming terminal lines
+---@param lines string[]
+---@param first_line integer
+function M.process_lines(lines, first_line)
+	for _, location_pattern in pairs(opts.patterns) do
+		highlight_extract(location_pattern, lines, first_line)
+	end
+end
+
+return M
