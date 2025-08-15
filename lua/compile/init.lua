@@ -35,12 +35,14 @@ M.opts = {
 	term_win_opts = {
 		split = "below",
 		height = 0.4,
+		width = 1,
 	},
 
 	---@type vim.api.keyset.win_config
 	normal_win_opts = {
 		split = "above",
 		height = 0.6,
+		width = 1,
 	},
 
 	---@type boolean
@@ -252,16 +254,16 @@ function M.setup(opts)
 	M.opts = vim.tbl_deep_extend("force", M.opts, opts)
 
 	-- Convert relative heights to absolute
-	if M.opts.term_win_opts.height < 1 then
+	if M.opts.term_win_opts.height <= 1 then
 		M.opts.term_win_opts.height = math.floor(vim.o.lines * M.opts.term_win_opts.height)
 	end
-	if M.opts.normal_win_opts.height < 1 then
+	if M.opts.normal_win_opts.height <= 1 then
 		M.opts.normal_win_opts.height = math.floor(vim.o.lines * M.opts.normal_win_opts.height)
 	end
-	if M.opts.term_win_opts.width < 1 then
+	if M.opts.term_win_opts.width <= 1 then
 		M.opts.term_win_opts.width = math.floor(vim.o.columns * M.opts.term_win_opts.width)
 	end
-	if M.opts.normal_win_opts.width < 1 then
+	if M.opts.normal_win_opts.width <= 1 then
 		M.opts.normal_win_opts.width = math.floor(vim.o.columns * M.opts.normal_win_opts.width)
 	end
 
