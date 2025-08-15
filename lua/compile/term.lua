@@ -74,6 +74,7 @@ function M.destroy()
 		M.state.win = -1
 		M.state.buf = -1
 		M.state.channel = -1
+		M.state.last_line = 0
 	end
 end
 
