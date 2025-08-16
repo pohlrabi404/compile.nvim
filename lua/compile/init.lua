@@ -270,7 +270,7 @@ function M.setup(opts)
 	-- Initialize submodules
 	M.term.setup(M.opts)
 	M.highlight.setup(M.opts)
-	M.keymaps.setup(M, M.opts)
+	M.keymaps.setup(M.opts)
 end
 
 return M

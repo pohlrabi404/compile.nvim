@@ -5,9 +5,8 @@
 local M = {}
 
 ---Setup keybindings for plugin
----@param main Compile Main plugin instance
 ---@param opts CompileConfig Configuration options
-function M.setup(main, opts)
+function M.setup(opts)
 	local term_group = vim.api.nvim_create_augroup("Compile", { clear = true })
 
 	-- Global keymaps
