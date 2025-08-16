@@ -124,7 +124,8 @@ function M.clear_hl()
 end
 
 ---Compile project and capture errors
-function M.compile()
+function M.compile(cmd)
+	cmd = cmd or M.opts.cmds.default
 	M.utils.enter_wrapper(function()
 		M.term.destroy()
 		if M.highlight.has_warnings() then
@@ -132,7 +133,7 @@ function M.compile()
 		end
 		M.term.show()
 		M.term.attach_event()
-		M.term.send_cmd(M.opts.cmds.default)
+		M.term.send_cmd(cmd)
 	end)
 end
 
@@ -270,7 +271,7 @@ function M.setup(opts)
 	-- Initialize submodules
 	M.term.setup(M.opts)
 	M.highlight.setup(M.opts)
-	M.keymaps.setup(M, M.opts)
+	M.keymaps.setup(M.opts)
 end
 
 return M
