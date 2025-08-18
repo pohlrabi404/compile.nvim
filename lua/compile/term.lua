@@ -99,7 +99,7 @@ end
 
 function M.get_terminator()
 	if is_windows_os() then
-		return "\r"
+		return " \r"
 	else
 		return "\n"
 	end
