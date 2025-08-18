@@ -93,7 +93,7 @@ end
 function M.send_cmd(cmd)
 	local line_count = vim.api.nvim_buf_line_count(M.state.buf)
 	vim.api.nvim_win_set_cursor(M.state.win, { line_count, 0 })
-	vim.api.nvim_chan_send(M.state.channel, cmd .. "\n")
+	vim.api.nvim_chan_send(M.state.channel, cmd .. "\r\n")
 end
 
 ---Attach warning parsing to terminal buffer
