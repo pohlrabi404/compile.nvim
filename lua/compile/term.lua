@@ -88,12 +88,30 @@ function M.toggle()
 	end
 end
 
+local function is_windows_os()
+	local sys = vim.loop.os_uname()
+	if sys.sysname == "Window_NT" then
+		return true
+	else -- Linux/Macs/BSD should all have \n as terminator
+		return false
+	end
+end
+
+function M.get_terminator()
+	if is_windows_os() then
+		return " \r"
+	else
+		return "\n"
+	end
+end
+
 ---Send command to terminal
 ---@param cmd string Command to execute
 function M.send_cmd(cmd)
 	local line_count = vim.api.nvim_buf_line_count(M.state.buf)
 	vim.api.nvim_win_set_cursor(M.state.win, { line_count, 0 })
-	vim.api.nvim_chan_send(M.state.channel, cmd .. "\n")
+	local terminator = M.get_terminator()
+	vim.api.nvim_chan_send(M.state.channel, cmd .. terminator)
 end
 
 ---Attach warning parsing to terminal buffer
