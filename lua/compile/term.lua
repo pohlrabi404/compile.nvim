@@ -67,6 +67,12 @@ function M.hide()
 	end
 end
 
+---Jump to terminal window
+function M.jump_to()
+	M.show()
+	vim.api.nvim_set_current_win(M.state.win)
+end
+
 ---Destroy terminal resources
 function M.destroy()
 	M.hide()

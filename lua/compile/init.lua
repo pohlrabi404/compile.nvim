@@ -78,6 +78,7 @@ M.opts = {
 				["<localleader>cp"] = "require('compile').prev_error()",
 				["<localleader>cl"] = "require('compile').last_error()",
 				["<localleader>cf"] = "require('compile').first_error()",
+				["<localleader>cj"] = "require('compile.term').jump_to()",
 			},
 		},
 		term = {
