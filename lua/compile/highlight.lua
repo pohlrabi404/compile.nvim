@@ -1,17 +1,3 @@
----@meta
----@class HighlightModule
----@field state {warning_list: table, warning_index: table, current_warning: integer}
----@field ns integer Highlight namespace
----@field setup fun(opts: table)
----@field clear_hl_warning fun()
----@field has_warnings fun(): boolean
----@field get_current_warning fun(): table|nil
----@field next_warning fun()
----@field prev_warning fun()
----@field first_warning fun()
----@field last_warning fun()
----@field process_lines fun(lines: string[], first_line: integer)
-
 local M = {}
 
 M.state = {
@@ -22,10 +8,9 @@ M.state = {
 
 M.ns = vim.api.nvim_create_namespace("TermHl")
 
-local opts = nil
+local opts = {}
 
 ---Initialize highlight module
----@param o table Configuration options
 function M.setup(o)
 	opts = o
 end
@@ -40,13 +25,11 @@ function M.clear_hl_warning()
 end
 
 ---Check if warnings exist
----@return boolean
 function M.has_warnings()
 	return #M.state.warning_index > 0
 end
 
 ---Get current warning data
----@return table|nil
 function M.get_current_warning()
 	if not M.has_warnings() then
 		return nil
@@ -83,8 +66,6 @@ function M.last_warning()
 end
 
 ---Process new terminal lines for warnings
----@param lines string[]
----@param first_line integer
 local function highlight_extract(location_pattern, lines, first_line)
 	local pattern = location_pattern[1]
 	local positions = require("compile.utils").split_to_num(location_pattern[2])
@@ -209,8 +190,6 @@ local function highlight_extract(location_pattern, lines, first_line)
 end
 
 ---Process incoming terminal lines
----@param lines string[]
----@param first_line integer
 function M.process_lines(lines, first_line)
 	for _, location_pattern in pairs(opts.patterns) do
 		highlight_extract(location_pattern, lines, first_line)

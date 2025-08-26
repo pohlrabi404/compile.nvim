@@ -1,22 +1,3 @@
----@meta
----@class TermModule
----@field state TermState
----@field setup fun(opts: table)
----@field init fun()
----@field show fun()
----@field hide fun()
----@field destroy fun()
----@field toggle fun()
----@field send_cmd fun(cmd: string)
----@field attach_event fun()
-
----@class TermState
----@field buf integer Terminal buffer ID
----@field win integer Terminal window ID
----@field channel integer Terminal channel ID
----@field warning_list table Parsed warning data
----@field warning_index table Warning index list
----@field current_warning integer Current warning index
 local M = {}
 
 M.state = {
@@ -29,10 +10,9 @@ M.state = {
 	current_warning = 0,
 }
 
-local opts = nil
+local opts = {}
 
 ---Initialize terminal module
----@param o table Configuration options
 function M.setup(o)
 	opts = o
 end

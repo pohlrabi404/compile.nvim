@@ -1,14 +1,6 @@
----@meta
----@class UtilsModule
----@field enter_wrapper fun(func: function)
----@field split_to_char fun(str: string): string[]
----@field split_to_num fun(str: string): integer[]
----@field get_normal_win fun(): integer
-
 local M = {}
 
 ---Execute function with optional focus preservation
----@param func function Function to execute
 function M.enter_wrapper(func)
 	local current_win = vim.api.nvim_get_current_win()
 	func()
@@ -18,8 +10,6 @@ function M.enter_wrapper(func)
 end
 
 ---Split string into character array
----@param str string Input string
----@return string[]
 function M.split_to_char(str)
 	local char_table = {}
 	for char in string.gmatch(str, ".") do
@@ -29,8 +19,6 @@ function M.split_to_char(str)
 end
 
 ---Split string into numeric array
----@param str string Input string
----@return integer[]
 function M.split_to_num(str)
 	local num_table = {}
 	for char in string.gmatch(str, ".") do
@@ -40,7 +28,6 @@ function M.split_to_num(str)
 end
 
 ---Get valid non-terminal window
----@return integer Window ID
 function M.get_normal_win()
 	if vim.api.nvim_get_current_win() == require("compile.term").state.win then
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -59,9 +46,6 @@ function M.get_normal_win()
 end
 
 ---Binary search index
----@param list integer[] sorted list of integers
----@param num integer the number to find index
----@return integer index
 function M.binary_search(list, num)
 	local bot = 1
 	local top = #list

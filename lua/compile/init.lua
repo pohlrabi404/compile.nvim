@@ -1,25 +1,3 @@
----@meta
----@class Compile
----@field opts CompileConfig
----@field term TermModule
----@field utils UtilsModule
----@field highlight HighlightModule
----@field keymaps KeymapsModule
-
----@class CompileConfig
----@field term_win_opts table Terminal window options
----@field normal_win_opts table Normal window options
----@field enter boolean Keep focus in terminal after commands
----@field highlight_under_cursor {enabled: boolean, timeout: number}
----@field cmds {default: string} Compilation commands
----@field patterns table Error pattern definitions
----@field colors {file: string, row: string, col: string} Highlight groups
----@field keys CompileKeymaps Keybinding configuration
-
----@class CompileKeymaps
----@field global table Global keymaps
----@field term {global: table, buffer: table} Terminal-specific keymaps
-
 local M = {}
 
 -- Load submodules
@@ -31,21 +9,18 @@ M.keymaps = require("compile.keymaps")
 -- Default configuration
 M.opts = {
 	term_win_name = "CompileTerm",
-	---@type vim.api.keyset.win_config
 	term_win_opts = {
 		split = "below",
 		height = 0.4,
 		width = 1,
 	},
 
-	---@type vim.api.keyset.win_config
 	normal_win_opts = {
 		split = "above",
 		height = 0.6,
 		width = 1,
 	},
 
-	---@type boolean
 	enter = false,
 
 	highlight_under_cursor = {
@@ -251,7 +226,6 @@ function M.first_error()
 end
 
 ---Setup plugin with user configuration
----@param opts CompileConfig
 function M.setup(opts)
 	opts = opts or {}
 	M.opts = vim.tbl_deep_extend("force", M.opts, opts)

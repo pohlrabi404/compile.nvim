@@ -1,11 +1,6 @@
----@meta
----@class KeymapsModule
----@field setup fun(main: Compile, opts: CompileConfig)
-
 local M = {}
 
 ---Setup keybindings for plugin
----@param opts CompileConfig Configuration options
 function M.setup(opts)
 	local term_group = vim.api.nvim_create_augroup("Compile", { clear = true })
 
