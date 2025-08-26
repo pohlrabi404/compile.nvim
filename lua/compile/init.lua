@@ -255,6 +255,11 @@ function M.setup(opts)
 	opts = opts or {}
 	M.opts = vim.tbl_deep_extend("force", M.opts, opts)
 
+	---Make sure to respect float configuration
+	if M.opts.term_win_opts.relative ~= nil then
+		M.opts.term_win_opts.split = nil
+	end
+
 	-- Convert relative heights to absolute
 	if M.opts.term_win_opts.height <= 1 then
 		M.opts.term_win_opts.height = math.floor(vim.o.lines * M.opts.term_win_opts.height)
