@@ -1,15 +1,8 @@
----@meta
----@class UtilsModule
----@field enter_wrapper fun(func: function)
----@field split_to_char fun(str: string): string[]
----@field split_to_num fun(str: string): integer[]
----@field get_normal_win fun(): integer
+local compile = {}
+compile.utils = {}
 
-local M = {}
-
----Execute function with optional focus preservation
----@param func function Function to execute
-function M.enter_wrapper(func)
+--- Execute function with optional focus preservation
+function compile.utils.enter_wrapper(func)
 	local current_win = vim.api.nvim_get_current_win()
 	func()
 	if (not require("compile").opts.enter) and vim.api.nvim_win_is_valid(current_win) then
@@ -17,10 +10,8 @@ function M.enter_wrapper(func)
 	end
 end
 
----Split string into character array
----@param str string Input string
----@return string[]
-function M.split_to_char(str)
+--- Split string into character array
+function compile.utils.split_to_char(str)
 	local char_table = {}
 	for char in string.gmatch(str, ".") do
 		table.insert(char_table, char)
@@ -28,10 +19,8 @@ function M.split_to_char(str)
 	return char_table
 end
 
----Split string into numeric array
----@param str string Input string
----@return integer[]
-function M.split_to_num(str)
+--- Split string into numeric array
+function compile.utils.split_to_num(str)
 	local num_table = {}
 	for char in string.gmatch(str, ".") do
 		table.insert(num_table, tonumber(char))
@@ -39,9 +28,8 @@ function M.split_to_num(str)
 	return num_table
 end
 
----Get valid non-terminal window
----@return integer Window ID
-function M.get_normal_win()
+--- Get valid non-terminal window
+function compile.utils.get_normal_win()
 	if vim.api.nvim_get_current_win() == require("compile.term").state.win then
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
 			if win ~= require("compile.term").state.win then
@@ -58,11 +46,8 @@ function M.get_normal_win()
 	return vim.api.nvim_get_current_win()
 end
 
----Binary search index
----@param list integer[] sorted list of integers
----@param num integer the number to find index
----@return integer index
-function M.binary_search(list, num)
+--- Binary search index
+function compile.utils.binary_search(list, num)
 	local bot = 1
 	local top = #list
 	local middle = math.floor((top + bot) / 2)
@@ -84,4 +69,4 @@ function M.binary_search(list, num)
 	return bot
 end
 
-return M
+return compile.utils
