@@ -90,7 +90,8 @@ opts = {
     -- 2 stands for row number
     -- 3 stands for col number (can be omitted if the language doesn't support)
     -- For example: col:filename:row will be "312" instead
-    rust = { "(%S+):(%d+):(%d+)", "123" },
+    rust = { "(%S+%.%a+):(%d+):(%d+)", "123" },
+    csharp = { "(%S+%.%a+)%((%d+),(%d+)%)", "123" },
     Makefile = { "%[(%S+):(%d+):.+%]", "12" },
     -- I will also add more regex for different error types soon
   },
