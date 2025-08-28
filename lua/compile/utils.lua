@@ -30,7 +30,24 @@ end
 
 --- Get valid non-terminal window
 function compile.utils.get_normal_win()
+	local warning_filename = require("compile.highlight").get_current_warning().file.val
+
+	local function endsWith(str, suffix)
+		return str:sub(-#suffix) == suffix
+	end
+
+	-- use the window that already has the warning in it first
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local buf = vim.api.nvim_win_get_buf(win)
+		local filename = vim.api.nvim_buf_get_name(buf)
+		if endsWith(filename, warning_filename) then
+			vim.api.nvim_set_current_win(win)
+			return win
+		end
+	end
+
 	if vim.api.nvim_get_current_win() == require("compile.term").state.win then
+		-- get the first instance of non-terminal window
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
 			if win ~= require("compile.term").state.win then
 				vim.api.nvim_set_current_win(win)
