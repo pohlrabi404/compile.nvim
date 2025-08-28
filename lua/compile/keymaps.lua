@@ -1,14 +1,15 @@
-local M = {}
+local compile = {}
+compile.keymaps = {}
 
----Setup keybindings for plugin
-function M.setup(opts)
+--- Setup keybindings for plugin
+function compile.keymaps.setup(opts)
 	local term_group = vim.api.nvim_create_augroup("Compile", { clear = true })
 
 	-- Global keymaps
 	for modes, keymap in pairs(opts.keys.global) do
 		for key, cmd in pairs(keymap) do
 			vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-				M.load(cmd)
+				compile.keymaps.load(cmd)
 			end, { silent = true })
 		end
 	end
@@ -26,7 +27,7 @@ function M.setup(opts)
 			for modes, keymap in pairs(opts.keys.term.global) do
 				for key, cmd in pairs(keymap) do
 					vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-						M.load(cmd)
+						compile.keymaps.load(cmd)
 					end, { silent = true })
 				end
 			end
@@ -35,7 +36,7 @@ function M.setup(opts)
 			for modes, keymap in pairs(opts.keys.term.buffer) do
 				for key, cmd in pairs(keymap) do
 					vim.keymap.set(require("compile.utils").split_to_char(modes), key, function()
-						M.load(cmd)
+						compile.keymaps.load(cmd)
 					end, { buffer = ev.buf, silent = true })
 				end
 			end
@@ -57,7 +58,8 @@ function M.setup(opts)
 	})
 end
 
-function M.load(code_str)
+--- Load keymaps
+function compile.keymaps.load(code_str)
 	local func, err = load(code_str)
 	if not func then
 		print("Error calling function " .. err)
@@ -69,4 +71,4 @@ function M.load(code_str)
 	end
 end
 
-return M
+return compile.keymaps

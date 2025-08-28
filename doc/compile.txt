@@ -1,0 +1,228 @@
+==============================================================================
+------------------------------------------------------------------------------
+                                                                  *compile.opts*
+                                 `compile.opts`
+Default configuration options for the plugin. Users can override these with `compile.setup()`.
+
+Class ~
+{compile.opts}
+
+Fields ~
+{term_win_name} `(string)` The name of the terminal window.
+{term_win_opts} `(vim.api.keyset.win_config)` Options of the terminal window
+{normal_win_opts} `(vim.api.keyset.win_config)` Options of the normal window (if there is not one already)
+{enter} `(boolean)` If true, automatically enter the terminal window after compiling.
+{highlight_under_cursor} `(table)` Options for highlighting the error under the cursor in both terminal and normal windows.
+{cmds} `(table)` A table of commands to execute for different file types.
+{patterns} `(table)` A table of regular expression patterns used to parse compiler errors.
+{colors} `(table)` A table of highlight groups to use for coloring different parts of an error message.
+{keys} `(table)` A table of keymaps for global and terminal-specific actions.
+
+------------------------------------------------------------------------------
+                                                               *compile.clear()*
+                               `compile.clear`()
+Clears the terminal and reinitializes it.
+This function effectively resets the compiler environment, removing any previous output and preparing it for a new compilation run.
+
+------------------------------------------------------------------------------
+                                                            *compile.clear_hl()*
+                              `compile.clear_hl`()
+Clears all highlight markers and the internal warning list.
+
+------------------------------------------------------------------------------
+                                                             *compile.compile()*
+                            `compile.compile`({cmd})
+Compiles the project and captures errors in the terminal.
+This is the core function for running the build process. It takes an optional command string, falls back to the default `make -k` command, and then initiates the compilation within the integrated terminal.
+Parameters ~
+{cmd} `(optional)` `(string)` The command to execute. Defaults to `compile.opts.cmds.default`.
+
+------------------------------------------------------------------------------
+                                                             *compile.destroy()*
+                              `compile.destroy`()
+Destroys the terminal buffer and window.
+
+------------------------------------------------------------------------------
+                                                          *compile.goto_error()*
+                             `compile.goto_error`()
+Navigates to the current error location in the code.
+
+------------------------------------------------------------------------------
+                                                       *compile.nearest_error()*
+                           `compile.nearest_error`()
+Navigates to the error nearest to the cursor's current position.
+This function searches the list of errors for the one that appears immediately before the cursor's current line in the editor, and then jumps to it.
+
+------------------------------------------------------------------------------
+                                                          *compile.next_error()*
+                             `compile.next_error`()
+Navigates to the next error in the list.
+
+------------------------------------------------------------------------------
+                                                          *compile.prev_error()*
+                             `compile.prev_error`()
+Navigates to the previous error in the list.
+
+------------------------------------------------------------------------------
+                                                          *compile.last_error()*
+                             `compile.last_error`()
+Navigates to the last error in the list.
+
+------------------------------------------------------------------------------
+                                                         *compile.first_error()*
+                            `compile.first_error`()
+Navigates to the first error in the list.
+
+------------------------------------------------------------------------------
+                                                               *compile.setup()*
+                            `compile.setup`({opts})
+Sets up the plugin with user configuration.
+
+This is the main entry point for configuring the plugin. It merges user-provided options with the defaults, performs necessary calculations for window sizes, and initializes the submodules.
+
+Parameters ~
+{opts} `(table|nil)` A table of user options to override the defaults.
+
+
+==============================================================================
+------------------------------------------------------------------------------
+                                                     *compile.highlight.setup()*
+                         `compile.highlight.setup`({o})
+Initialize highlight module
+
+------------------------------------------------------------------------------
+                                          *compile.highlight.clear_hl_warning()*
+                     `compile.highlight.clear_hl_warning`()
+Clear all warning highlights
+
+------------------------------------------------------------------------------
+                                              *compile.highlight.has_warnings()*
+                       `compile.highlight.has_warnings`()
+Check if warnings exist
+
+------------------------------------------------------------------------------
+                                       *compile.highlight.get_current_warning()*
+                   `compile.highlight.get_current_warning`()
+Get current warning data
+
+------------------------------------------------------------------------------
+                                              *compile.highlight.next_warning()*
+                       `compile.highlight.next_warning`()
+Navigate to next warning
+
+------------------------------------------------------------------------------
+                                              *compile.highlight.prev_warning()*
+                       `compile.highlight.prev_warning`()
+Navigate to previous warning
+
+------------------------------------------------------------------------------
+                                             *compile.highlight.first_warning()*
+                      `compile.highlight.first_warning`()
+Navigate to first warning
+
+------------------------------------------------------------------------------
+                                              *compile.highlight.last_warning()*
+                       `compile.highlight.last_warning`()
+Navigate to last warning
+
+------------------------------------------------------------------------------
+                                             *compile.highlight.process_lines()*
+            `compile.highlight.process_lines`({lines}, {first_line})
+Process incoming terminal lines
+
+
+==============================================================================
+------------------------------------------------------------------------------
+                                                       *compile.keymaps.setup()*
+                        `compile.keymaps.setup`({opts})
+Setup keybindings for plugin
+
+------------------------------------------------------------------------------
+                                                        *compile.keymaps.load()*
+                       `compile.keymaps.load`({code_str})
+Load keymaps
+
+
+==============================================================================
+------------------------------------------------------------------------------
+                                                          *compile.term.setup()*
+                           `compile.term.setup`({o})
+Initialize terminal module
+
+------------------------------------------------------------------------------
+                                                           *compile.term.init()*
+                             `compile.term.init`()
+Initialize terminal buffer and window
+
+------------------------------------------------------------------------------
+                                                           *compile.term.show()*
+                             `compile.term.show`()
+Show terminal window
+
+------------------------------------------------------------------------------
+                                                           *compile.term.hide()*
+                             `compile.term.hide`()
+Hide terminal window
+
+------------------------------------------------------------------------------
+                                                        *compile.term.jump_to()*
+                            `compile.term.jump_to`()
+Jump to terminal window
+
+------------------------------------------------------------------------------
+                                                        *compile.term.destroy()*
+                            `compile.term.destroy`()
+Destroy terminal resources
+
+------------------------------------------------------------------------------
+                                                         *compile.term.toggle()*
+                            `compile.term.toggle`()
+Toggle terminal visibility
+
+------------------------------------------------------------------------------
+                                                 *compile.term.get_terminator()*
+                        `compile.term.get_terminator`()
+Get terminator based on OS
+
+------------------------------------------------------------------------------
+                                                       *compile.term.send_cmd()*
+                         `compile.term.send_cmd`({cmd})
+Send command to terminal
+
+Parameters ~
+{cmd} `(string)` Command to execute
+
+------------------------------------------------------------------------------
+                                                   *compile.term.attach_event()*
+                         `compile.term.attach_event`()
+Attach warning parsing to terminal buffer
+
+
+==============================================================================
+------------------------------------------------------------------------------
+                                                 *compile.utils.enter_wrapper()*
+                     `compile.utils.enter_wrapper`({func})
+Execute function with optional focus preservation
+
+------------------------------------------------------------------------------
+                                                 *compile.utils.split_to_char()*
+                      `compile.utils.split_to_char`({str})
+Split string into character array
+
+------------------------------------------------------------------------------
+                                                  *compile.utils.split_to_num()*
+                      `compile.utils.split_to_num`({str})
+Split string into numeric array
+
+------------------------------------------------------------------------------
+                                                *compile.utils.get_normal_win()*
+                        `compile.utils.get_normal_win`()
+Get valid non-terminal window
+
+------------------------------------------------------------------------------
+                                                 *compile.utils.binary_search()*
+                  `compile.utils.binary_search`({list}, {num})
+Binary search index
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

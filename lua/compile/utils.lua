@@ -1,7 +1,8 @@
-local M = {}
+local compile = {}
+compile.utils = {}
 
----Execute function with optional focus preservation
-function M.enter_wrapper(func)
+--- Execute function with optional focus preservation
+function compile.utils.enter_wrapper(func)
 	local current_win = vim.api.nvim_get_current_win()
 	func()
 	if (not require("compile").opts.enter) and vim.api.nvim_win_is_valid(current_win) then
@@ -9,8 +10,8 @@ function M.enter_wrapper(func)
 	end
 end
 
----Split string into character array
-function M.split_to_char(str)
+--- Split string into character array
+function compile.utils.split_to_char(str)
 	local char_table = {}
 	for char in string.gmatch(str, ".") do
 		table.insert(char_table, char)
@@ -18,8 +19,8 @@ function M.split_to_char(str)
 	return char_table
 end
 
----Split string into numeric array
-function M.split_to_num(str)
+--- Split string into numeric array
+function compile.utils.split_to_num(str)
 	local num_table = {}
 	for char in string.gmatch(str, ".") do
 		table.insert(num_table, tonumber(char))
@@ -27,8 +28,8 @@ function M.split_to_num(str)
 	return num_table
 end
 
----Get valid non-terminal window
-function M.get_normal_win()
+--- Get valid non-terminal window
+function compile.utils.get_normal_win()
 	if vim.api.nvim_get_current_win() == require("compile.term").state.win then
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
 			if win ~= require("compile.term").state.win then
@@ -45,8 +46,8 @@ function M.get_normal_win()
 	return vim.api.nvim_get_current_win()
 end
 
----Binary search index
-function M.binary_search(list, num)
+--- Binary search index
+function compile.utils.binary_search(list, num)
 	local bot = 1
 	local top = #list
 	local middle = math.floor((top + bot) / 2)
@@ -68,4 +69,4 @@ function M.binary_search(list, num)
 	return bot
 end
 
-return M
+return compile.utils
