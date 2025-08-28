@@ -3,21 +3,19 @@
 Meet **compile.nvim**, the Neovim plugin that brings integrated compilation right into your workflow!
 It’s inspired by the famous Emacs Compilation Mode, but utilizing Neovim terminal buffer.
 
-Instead of just piping output to a new buffer (which can be tricky to interact with), this plugin uses Neovim's built-in terminal buffers. 
-This means you get a powerful, interactive terminal for your build processes while also enjoying real-time error highlighting and seamless navigation. 
+Instead of just piping output to a new buffer (which can be tricky to interact with), this plugin uses Neovim's built-in terminal buffers.
+This means you get a powerful, interactive terminal for your build processes while also enjoying real-time error highlighting and seamless navigation.
 No more juggling windows or trying to figure out where your compiler's output went!
 
 ## ✨ Features
 
-
 [Demo](https://github.com/user-attachments/assets/370993be-c461-4f8c-9714-7c59d8836784)
 
-
-  - **Effortless Error Navigation**: Zip between compiler errors with simple keybinds.
-  - **Instant Error Jumps**: Place your cursor on or after an error, and it will jump directly to the spot in your code!
-  - **Fresh Start, Every Time**: The error list is automatically cleared for each new compilation, so you always see the latest issues.
-  - **Smart Terminal**: By default, `  <C-j> ` in the terminal will send a `<CR>` without clearing your error list.
-  - **Ready to Go**: The default compile command is `"make -k"`, so you can start compiling out of the box.
+- **Effortless Error Navigation**: Zip between compiler errors with simple keybinds.
+- **Instant Error Jumps**: Place your cursor on or after an error, and it will jump directly to the spot in your code!
+- **Fresh Start, Every Time**: The error list is automatically cleared for each new compilation, so you always see the latest issues.
+- **Smart Terminal**: By default, ` <C-j>` in the terminal will send a `<CR>` without clearing your error list.
+- **Ready to Go**: The default compile command is `"make -k"`, so you can start compiling out of the box.
 
 ## 🚀 Installation
 
@@ -117,6 +115,8 @@ opts = {
         ["<localleader>cp"] = "require('compile').prev_error()",
         ["<localleader>cl"] = "require('compile').last_error()",
         ["<localleader>cf"] = "require('compile').first_error()",
+        -- jump to terminal buffer
+        ["<localleader>cj"] = "require('compile').term.jump_to()",
       },
     },
     term = {
@@ -157,8 +157,62 @@ opts = {
   },
 }
 ```
-## 📜 Documentation (TODO)
-Sorry a bit lazy, pinky promise that I won't forget about it
+
+## 📜 Documentation
+
+### Core `require('compile')`
+
+| Function        | Description                                         |
+| :-------------- | :-------------------------------------------------- |
+| setup(opts)     | Initialize plugin with user configuration           |
+| compile(cmd)    | Reset the current terminal and execute cmd          |
+| clear()         | Clear terminal and reinitialize                     |
+| destroy()       | Completely remove terminal resources and buffer     |
+| clear_hl()      | Clear highlights and reset terminal cursor position |
+| goto_error()    | Navigate to current error location in source file   |
+| next_error()    | Navigate to next error location in source file      |
+| prev_error()    | Navigate to previous error location in source file  |
+| first_error()   | Navigate to the first error location in source file |
+| last_error()    | Navigate to the last error location in source file  |
+| nearest_error() | Navigate to the error nearest to cursor position    |
+
+### Terminal `require('compile.term')`
+
+| Function       | Description                                               |
+| :------------- | :-------------------------------------------------------- |
+| init()         | Create terminal buffer, window and start terminal session |
+| show()         | Show terminal window, create if not exists                |
+| hide()         | Hide terminal window but keep buffer                      |
+| destroy()      | Destroy terminal buffer and reset all state               |
+| toggle()       | Toggle terminal buffer visibility                         |
+| send_cmd(cmd)  | Send cmd to the terminal channel                          |
+| attach_event() | Attach buffer event for error parsing                     |
+
+### Highlight `require('compile.highlight')`
+
+| Function              | Description                                      |
+| :-------------------- | :----------------------------------------------- |
+| clear_hl_warning()    | Clear all highlights and reset states            |
+| has_warnings()        | Check if any warnings exist                      |
+| get_current_warning() | Get current warning data structure               |
+| next_warning()        | Set current warning to next warning in index     |
+| prev_warning()        | Set current warning to previous warning in index |
+| first_warning()       | Set current warning to first warning in index    |
+| last_warning()        | Set current warning to last warning in index     |
+
+### Keymaps `require('compile.keymaps')`
+
+| Function    | Description                                    |
+| :---------- | :--------------------------------------------- |
+| setup(opts) | Setup global and terminal-specific keybindings |
+
+### Utility `require('compile.utils')`
+
+| Function            | Description                                                             |
+| :------------------ | :---------------------------------------------------------------------- |
+| enter_wrapper(func) | Execute function with optional focus preservation based on `opts.enter` |
+| get_normal_win()    | Get valid non-terminal window                                           |
 
 ## 🛠️ PRs
+
 PRs and Issues are always welcome~
