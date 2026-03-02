@@ -26,9 +26,13 @@ end
 
 --- Compiles the project and captures errors in the terminal.
 --- This is the core function for running the build process. It takes an optional command string, falls back to the default `make -k` command, and then initiates the compilation within the integrated terminal.
----@param cmd? string The command to execute. Defaults to `compile.opts.cmds.default`.
+---@param cmd? string|function The command to execute. Defaults to `compile.opts.cmds.default`.
 function compile.compile(cmd)
 	cmd = cmd or compile.opts.cmds.default
+	if type(cmd) == 'function' then
+		cmd = cmd()
+	end
+
 	compile.utils.enter_wrapper(function()
 		compile.term.destroy()
 		if compile.highlight.has_warnings() then

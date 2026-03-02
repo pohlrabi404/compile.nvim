@@ -55,26 +55,16 @@ return {
 	keys = {
 		global = {
 			["n"] = {
-				["<localleader>cc"] = "require('compile').compile()",
 				["<localleader>cn"] = "require('compile').next_error()",
 				["<localleader>cp"] = "require('compile').prev_error()",
-				["<localleader>cl"] = "require('compile').last_error()",
-				["<localleader>cf"] = "require('compile').first_error()",
-				["<localleader>cj"] = "require('compile').term.jump_to()",
 			},
 		},
 		term = {
 			global = {
-				["n"] = {
-					["<localleader>cr"] = "require('compile').clear()",
-					["<localleader>cq"] = "require('compile').destroy()",
-				},
+				["n"] = {},
 			},
 			buffer = {
 				["n"] = {
-					["r"] = "require('compile').clear()",
-					["c"] = "require('compile').compile()",
-					["q"] = "require('compile').destroy()",
 					["n"] = "require('compile').next_error()",
 					["p"] = "require('compile').prev_error()",
 					["0"] = "require('compile').first_error()",
@@ -83,7 +73,6 @@ return {
 				},
 				["t"] = {
 					["<CR>"] = "require('compile').clear_hl()",
-					["<C-j>"] = "require('compile.term').send_cmd('')",
 				},
 			},
 		},
