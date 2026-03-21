@@ -79,7 +79,7 @@ opts = {
   cmds = {
     -- The default command to run when you compile. Change this if you use a different build tool!
     -- I will make it possible to have dynamic default for each project types soon~
-    default = "make -k",
+      default = "make -k",  -- Set to empty string to always prompt for a custom build command
   },
 
   patterns = {
