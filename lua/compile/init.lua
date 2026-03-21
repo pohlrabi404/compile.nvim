@@ -28,7 +28,10 @@ end
 --- This is the core function for running the build process. It takes an optional command string, falls back to the default `make -k` command, and then initiates the compilation within the integrated terminal.
 ---@param cmd? string The command to execute. Defaults to `compile.opts.cmds.default`.
 function compile.compile(cmd)
-	cmd = cmd or compile.opts.cmds.default
+  if not cmd then
+		cmd = vim.fn.input("Compile command: ", compile.opts.cmds.default)
+		if cmd == "" then return end
+	end
 	compile.utils.enter_wrapper(function()
 		compile.term.destroy()
 		if compile.highlight.has_warnings() then
